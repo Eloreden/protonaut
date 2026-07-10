@@ -1,0 +1,10 @@
+# Build artifacts
+build/bin
+Protonaut
+frontend/dist
+
+# Dependencies
+node_modules
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
