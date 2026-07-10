@@ -5,11 +5,10 @@ A desktop companion dashboard for your Steam/Proton library on Linux, built with
 ## Features
 
 - Parses Steam libraries (`libraryfolders.vdf` + `appmanifest_*.acf`) and filters out non-game entries (Proton, runtimes, redistributables, SDKs, dedicated servers)
-- Reads favorites from Steam's `localconfig.vdf`
+- Local favorites (starred games shown first), independent of Steam's own collections
 - Detects running Proton game processes via `/proc/<pid>/environ`
 - Auto-launches companion tools (e.g. `protontricks-launch`) when a paired game starts running
-- Multi-monitor DPI-aware UI scaling (KDE/Wayland via `kscreen-doctor`)
-
+ok ok
 ## Requirements
 
 - Linux with Steam and Proton

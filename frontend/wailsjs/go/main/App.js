@@ -10,6 +10,10 @@ export function GetCompanions() {
   return window['go']['main']['App']['GetCompanions']();
 }
 
+export function GetCoverImage(arg1) {
+  return window['go']['main']['App']['GetCoverImage'](arg1);
+}
+
 export function GetInstalledGames() {
   return window['go']['main']['App']['GetInstalledGames']();
 }
@@ -40,4 +44,8 @@ export function RemoveCompanion(arg1, arg2) {
 
 export function SelectCompanionExe() {
   return window['go']['main']['App']['SelectCompanionExe']();
+}
+
+export function SetFavorite(arg1, arg2) {
+  return window['go']['main']['App']['SetFavorite'](arg1, arg2);
 }

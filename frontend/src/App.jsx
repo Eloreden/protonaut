@@ -7,6 +7,8 @@ import {
     RemoveCompanion,
     SelectCompanionExe,
     GetMonitors,
+    GetCoverImage,
+    SetFavorite,
 } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import './App.css';
@@ -37,16 +39,24 @@ export default function App() {
         GetCompanions().then(c => setCompanions(c || {})).catch(() => {});
     }, []);
 
-    useEffect(() => {
+    const refreshGames = useCallback(() => {
         GetInstalledGames()
             .then(g => { setGames(g || []); setLoading(false); })
             .catch(e => { setError(String(e)); setLoading(false); });
+    }, []);
+
+    const toggleFavorite = useCallback((appId, favorite) => {
+        SetFavorite(appId, favorite).then(refreshGames).catch(() => {});
+    }, [refreshGames]);
+
+    useEffect(() => {
+        refreshGames();
         refreshCompanions();
         GetMonitors().then(monitors => {
             const primary = monitors?.find(m => m.primary) || monitors?.[0];
             if (primary) setCurrentMonitor(primary);
         }).catch(() => {});
-    }, [refreshCompanions]);
+    }, [refreshGames, refreshCompanions]);
 
     // Ascolta i cambi di monitor e applica correzione zoom se necessario
     useEffect(() => {
@@ -135,6 +145,7 @@ export default function App() {
                                     companions={companions[g.appId] || []}
                                     onOpenModal={() => setCompanionModal({ game: g })}
                                     onRemove={(exe) => RemoveCompanion(g.appId, exe).then(refreshCompanions)}
+                                    onToggleFavorite={toggleFavorite}
                                 />
                             ))}
                         </div>
@@ -151,6 +162,7 @@ export default function App() {
                                     companions={companions[g.appId] || []}
                                     onOpenModal={() => setCompanionModal({ game: g })}
                                     onRemove={(exe) => RemoveCompanion(g.appId, exe).then(refreshCompanions)}
+                                    onToggleFavorite={toggleFavorite}
                                 />
                             ))}
                         </div>
@@ -171,34 +183,39 @@ export default function App() {
     );
 }
 
-const IMG_FALLBACKS = (appId) => [
-    `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`,
-    `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/capsule_231x87.jpg`,
-    `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/capsule_sm_120.jpg`,
-];
-
-function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onRemove }) {
+function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onRemove, onToggleFavorite }) {
     const isRunning = runningIds.has(game.appId);
     const proc = runningProcs[game.appId];
-    const [imgIdx, setImgIdx] = useState(0);
-    const fallbacks = IMG_FALLBACKS(game.appId);
-    const imgUrl = fallbacks[imgIdx];
+    const [imgSrc, setImgSrc] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setImgSrc(null);
+        GetCoverImage(game.appId)
+            .then(dataUri => { if (!cancelled) setImgSrc(dataUri); })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [game.appId]);
 
     return (
         <div className={`game-card${isRunning ? ' game-card--running' : ''}`}>
             <div className="game-card__cover">
-                {imgUrl ? (
+                {imgSrc ? (
                     <img
                         className="game-cover-img"
-                        src={imgUrl}
+                        src={imgSrc}
                         alt=""
                         loading="lazy"
-                        onError={() => setImgIdx(i => i + 1 < fallbacks.length ? i + 1 : fallbacks.length)}
                     />
                 ) : (
                     <div className="game-cover-placeholder">{game.name}</div>
                 )}
-                {game.favorite && <span className="card-fav-star">★</span>}
+                <button
+                    className={`card-fav-star${game.favorite ? ' card-fav-star--active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(game.appId, !game.favorite); }}
+                    title={game.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                    aria-label={game.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                />
                 {isRunning && <span className="card-running-dot"><span className="pulse-dot" /></span>}
             </div>
 

@@ -196,12 +196,28 @@
 
 .card-fav-star {
     position: absolute;
-    top: 7px;
-    left: 9px;
-    color: var(--fav-color);
-    font-size: 18px;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-    line-height: 1;
+    top: 0;
+    left: 16px;
+    z-index: 1;
+    width: 26px;
+    height: 38px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: #6b7785;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    transition: background-color 0.15s ease, transform 0.12s ease;
+}
+
+.card-fav-star:hover {
+    background: #8b97a5;
+    transform: translateY(2px);
+}
+
+.card-fav-star--active,
+.card-fav-star--active:hover {
+    background: var(--fav-color);
 }
 
 .card-running-dot {

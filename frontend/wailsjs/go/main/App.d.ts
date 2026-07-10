@@ -7,6 +7,8 @@ export function AddCompanion(arg1:string,arg2:string):Promise<void>;
 
 export function GetCompanions():Promise<Record<string, Array<models.Companion>>>;
 
+export function GetCoverImage(arg1:string):Promise<string>;
+
 export function GetInstalledGames():Promise<Array<models.Game>>;
 
 export function GetLibraries():Promise<Array<models.Library>>;
@@ -22,3 +24,5 @@ export function Greet(arg1:string):Promise<string>;
 export function RemoveCompanion(arg1:string,arg2:string):Promise<void>;
 
 export function SelectCompanionExe():Promise<string>;
+
+export function SetFavorite(arg1:string,arg2:boolean):Promise<void>;

@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -247,66 +246,6 @@ func (s *Scanner) GetLibraries() ([]models.Library, error) {
 	return libs, nil
 }
 
-// getFavoriteAppIDs legge la collezione "favorite" da localconfig.vdf e
-// restituisce un set di AppID (come stringhe) marcati come preferiti.
-func (s *Scanner) getFavoriteAppIDs() map[string]bool {
-	favs := map[string]bool{}
-	userdataDir := filepath.Join(homeDir(), ".local/share/Steam/userdata")
-	entries, err := os.ReadDir(userdataDir)
-	if err != nil {
-		return favs
-	}
-	for _, e := range entries {
-		cfg := filepath.Join(userdataDir, e.Name(), "config", "localconfig.vdf")
-		data, err := os.ReadFile(cfg)
-		if err != nil {
-			continue
-		}
-		// Cerca la stringa JSON di user-collections nel file VDF.
-		raw := parseKV(string(data))
-		collections := kvSearchLeaf(raw, "user-collections")
-		if collections == "" {
-			continue
-		}
-		// Struttura JSON: {"favorite":{"id":"favorite","added":[appid,...],"removed":[...]}}
-		var col struct {
-			Favorite struct {
-				Added   []json.Number `json:"added"`
-				Removed []json.Number `json:"removed"`
-			} `json:"favorite"`
-		}
-		if err := json.Unmarshal([]byte(collections), &col); err != nil {
-			continue
-		}
-		removedSet := map[string]bool{}
-		for _, id := range col.Favorite.Removed {
-			removedSet[id.String()] = true
-		}
-		for _, id := range col.Favorite.Added {
-			s := id.String()
-			if !removedSet[s] {
-				favs[s] = true
-			}
-		}
-	}
-	return favs
-}
-
-// kvSearchLeaf cerca ricorsivamente la prima foglia con la chiave data.
-func kvSearchLeaf(kv *KV, key string) string {
-	for _, p := range kv.Pairs {
-		if p.Sub == nil && strings.EqualFold(p.Key, key) {
-			return p.Value
-		}
-		if p.Sub != nil {
-			if v := kvSearchLeaf(p.Sub, key); v != "" {
-				return v
-			}
-		}
-	}
-	return ""
-}
-
 // isNonGame riconosce i pacchetti di sistema Steam che non sono giochi veri:
 // runtime Proton, Steam Linux Runtime, redistributabili, tool di upload, ecc.
 func isNonGame(name string) bool {
@@ -322,13 +261,13 @@ func isNonGame(name string) bool {
 
 // GetInstalledGames scandisce gli appmanifest_*.acf di ogni libreria.
 // Esclude i pacchetti di sistema (Proton, runtime, redistributabili).
-// I giochi sono ordinati: preferiti Steam prima (A→Z), poi il resto (A→Z).
+// Ordinati A→Z; il flag Favorite (e il relativo riordino) è applicato a
+// livello App, che lo legge dal FavoritesManager locale.
 func (s *Scanner) GetInstalledGames() ([]models.Game, error) {
 	libs, err := s.GetLibraries()
 	if err != nil {
 		return nil, err
 	}
-	favs := s.getFavoriteAppIDs()
 
 	var games []models.Game
 	for _, lib := range libs {
@@ -362,15 +301,10 @@ func (s *Scanner) GetInstalledGames() ([]models.Game, error) {
 				InstallDir: installdir,
 				LibraryID:  lib.ID,
 				FullPath:   filepath.Join(steamapps, "common", installdir),
-				Favorite:   favs[appid],
 			})
 		}
 	}
 	sort.Slice(games, func(i, j int) bool {
-		fi, fj := games[i].Favorite, games[j].Favorite
-		if fi != fj {
-			return fi // i preferiti vengono prima
-		}
 		return games[i].Name < games[j].Name
 	})
 	return games, nil

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"Protonaut/backend"
@@ -15,6 +16,8 @@ type App struct {
 	ctx              context.Context
 	scanner          *backend.Scanner
 	companionManager *backend.CompanionManager
+	coverCache       *backend.CoverCache
+	favoritesManager *backend.FavoritesManager
 }
 
 // NewApp creates a new App application struct
@@ -23,6 +26,8 @@ func NewApp() *App {
 	return &App{
 		scanner:          s,
 		companionManager: backend.NewCompanionManager(s),
+		coverCache:       backend.NewCoverCache(),
+		favoritesManager: backend.NewFavoritesManager(),
 	}
 }
 
@@ -36,15 +41,39 @@ func (a *App) GetLibraries() ([]models.Library, error) {
 	return a.scanner.GetLibraries()
 }
 
-// GetInstalledGames restituisce tutti i giochi installati in tutte le librerie.
+// GetInstalledGames restituisce tutti i giochi installati in tutte le
+// librerie, con il flag Favorite applicato dal FavoritesManager locale e
+// i preferiti ordinati per primi (poi A→Z).
 func (a *App) GetInstalledGames() ([]models.Game, error) {
-	return a.scanner.GetInstalledGames()
+	games, err := a.scanner.GetInstalledGames()
+	if err != nil {
+		return nil, err
+	}
+	for i := range games {
+		games[i].Favorite = a.favoritesManager.IsFavorite(games[i].AppID)
+	}
+	sort.SliceStable(games, func(i, j int) bool {
+		return games[i].Favorite && !games[j].Favorite
+	})
+	return games, nil
+}
+
+// SetFavorite imposta o rimuove il preferito locale per l'appId dato.
+func (a *App) SetFavorite(appId string, favorite bool) error {
+	return a.favoritesManager.SetFavorite(appId, favorite)
 }
 
 // GetRunningProtonProcesses restituisce i processi Proton attivi con il loro
 // PID e AppID (target per l'iniezione del codice).
 func (a *App) GetRunningProtonProcesses() ([]models.ProtonProcess, error) {
 	return a.scanner.GetRunningProtonProcesses()
+}
+
+// GetCoverImage restituisce la copertina del gioco come data URI, servita
+// dalla cache locale su disco se già presente, altrimenti risolta tramite
+// la Steam Store API e cachata per le richieste successive.
+func (a *App) GetCoverImage(appId string) (string, error) {
+	return a.coverCache.GetCoverImage(appId)
 }
 
 func (a *App) startup(ctx context.Context) {
