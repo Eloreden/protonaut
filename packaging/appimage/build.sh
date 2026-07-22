@@ -53,7 +53,7 @@ mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
     "$APPDIR/usr/share/icons/hicolor/512x512/apps"
 cp "$ROOT_DIR/build/bin/Protonaut" "$APPDIR/usr/bin/protonaut"
 cp "$ROOT_DIR/packaging/linux/protonaut.desktop" "$APPDIR/usr/share/applications/protonaut.desktop"
-magick "$ROOT_DIR/build/appicon.png" -resize 512x512 \
+convert "$ROOT_DIR/build/appicon.png" -resize 512x512 \
     "$APPDIR/usr/share/icons/hicolor/512x512/apps/protonaut.png"
 
 echo "==> Running linuxdeploy (bundles GTK/WebKit runtime deps)"
