@@ -5,5 +5,5 @@ Comment=Companion dashboard for your Steam/Proton library
 Exec=protonaut
 Icon=protonaut
 Terminal=false
-Categories=Game;Utility;
+Categories=Game;
 StartupWMClass=protonaut

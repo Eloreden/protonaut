@@ -9,6 +9,10 @@ packaging/aur/src/
 packaging/aur/protonaut-git/
 packaging/aur/*.pkg.tar.*
 
+# AppImage build artifacts (downloaded tools + AppDir + output)
+packaging/appimage/tools/
+packaging/appimage/build/
+
 # Dependencies
 node_modules
 
