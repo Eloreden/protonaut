@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Protonaut
+Comment=Companion dashboard for your Steam/Proton library
+Exec=protonaut
+Icon=protonaut
+Terminal=false
+Categories=Game;Utility;
+StartupWMClass=protonaut

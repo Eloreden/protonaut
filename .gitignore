@@ -3,6 +3,12 @@ build/bin
 Protonaut
 frontend/dist
 
+# makepkg (AUR) build artifacts
+packaging/aur/pkg/
+packaging/aur/src/
+packaging/aur/protonaut-git/
+packaging/aur/*.pkg.tar.*
+
 # Dependencies
 node_modules
 
