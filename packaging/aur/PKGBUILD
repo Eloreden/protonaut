@@ -1,6 +1,6 @@
 # Maintainer: Eloreden <luca.morleschi@outlook.it>
 pkgname=protonaut-git
-pkgver=r2.14e0edc
+pkgver=r3.e900a56
 pkgrel=1
 pkgdesc="A desktop companion dashboard for your Steam/Proton library on Linux, built with Wails (Go + React)"
 arch=('x86_64')
@@ -31,7 +31,7 @@ build() {
     cd ..
 
     export CGO_ENABLED=1
-    go build -tags webkit2_41,desktop,production \
+    go build -trimpath -tags webkit2_41,desktop,production \
         -ldflags "-w -s" \
         -o protonaut .
 }
