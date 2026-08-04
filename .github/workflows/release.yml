@@ -73,3 +73,29 @@ jobs:
         with:
           files: packaging/appimage/build/Protonaut-${{ github.ref_name }}-x86_64.AppImage
           generate_release_notes: true
+
+  publish-aur:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # storia completa: pkgver() usa git rev-list --count
+
+      - name: Compute pkgver from git HEAD
+        run: |
+          PKGVER="r$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
+          echo "Computed pkgver: $PKGVER"
+          sed -i "s/^pkgver=.*/pkgver=$PKGVER/" packaging/aur/PKGBUILD
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.2
+        with:
+          pkgname: protonaut-git
+          pkgbuild: packaging/aur/PKGBUILD
+          commit_username: Eloreden
+          commit_email: luca.morleschi@outlook.it
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Bump to ${{ github.sha }}"
+          ssh_keyscan_types: rsa,ed25519
