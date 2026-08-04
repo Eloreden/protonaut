@@ -18,16 +18,19 @@ type App struct {
 	companionManager *backend.CompanionManager
 	coverCache       *backend.CoverCache
 	favoritesManager *backend.FavoritesManager
+	settingsManager  *backend.SettingsManager
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
 	s := backend.NewScanner()
+	settings := backend.NewSettingsManager()
 	return &App{
 		scanner:          s,
-		companionManager: backend.NewCompanionManager(s),
+		companionManager: backend.NewCompanionManager(s, settings),
 		coverCache:       backend.NewCoverCache(),
 		favoritesManager: backend.NewFavoritesManager(),
+		settingsManager:  settings,
 	}
 }
 
@@ -189,6 +192,22 @@ func (a *App) SelectCompanionExe() (string, error) {
 		},
 	})
 	return path, err
+}
+
+// GetSettings restituisce le preferenze globali correnti.
+func (a *App) GetSettings() models.Settings {
+	return a.settingsManager.GetSettings()
+}
+
+// SetSettings aggiorna e persiste le preferenze globali.
+func (a *App) SetSettings(s models.Settings) error {
+	return a.settingsManager.SetSettings(s)
+}
+
+// LaunchCompanions lancia manualmente i companion configurati per l'appId dato
+// (clic sulla cella del gioco). Restituisce quanti ne ha avviati.
+func (a *App) LaunchCompanions(appId string) int {
+	return a.companionManager.LaunchCompanionsFor(appId)
 }
 
 // Greet returns a greeting for the given name

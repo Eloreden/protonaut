@@ -9,6 +9,9 @@ import {
     GetMonitors,
     GetCoverImage,
     SetFavorite,
+    GetSettings,
+    SetSettings,
+    LaunchCompanions,
 } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import './App.css';
@@ -33,6 +36,8 @@ export default function App() {
     const [error, setError] = useState(null);
     const [companionModal, setCompanionModal] = useState(null); // { game }
     const [currentMonitor, setCurrentMonitor] = useState(null);
+    const [settings, setSettings] = useState({ autoLaunchCompanions: true, autoDetectGames: true });
+    const [showSettings, setShowSettings] = useState(false);
     const intervalRef = useRef(null);
 
     const refreshCompanions = useCallback(() => {
@@ -49,9 +54,19 @@ export default function App() {
         SetFavorite(appId, favorite).then(refreshGames).catch(() => {});
     }, [refreshGames]);
 
+    const launchCompanions = useCallback((appId) => {
+        return LaunchCompanions(appId).catch(() => 0);
+    }, []);
+
+    const saveSettings = useCallback((next) => {
+        setSettings(next);
+        SetSettings(next).catch(() => {});
+    }, []);
+
     useEffect(() => {
         refreshGames();
         refreshCompanions();
+        GetSettings().then(s => { if (s) setSettings(s); }).catch(() => {});
         GetMonitors().then(monitors => {
             const primary = monitors?.find(m => m.primary) || monitors?.[0];
             if (primary) setCurrentMonitor(primary);
@@ -68,6 +83,11 @@ export default function App() {
     }, []);
 
     useEffect(() => {
+        if (!settings.autoDetectGames) {
+            setRunningIds(new Set());
+            setRunningProcs({});
+            return;
+        }
         const poll = () => {
             GetRunningProtonProcesses()
                 .then(procs => {
@@ -86,7 +106,7 @@ export default function App() {
         poll();
         intervalRef.current = setInterval(poll, POLL_INTERVAL);
         return () => clearInterval(intervalRef.current);
-    }, []);
+    }, [settings.autoDetectGames]);
 
     const filtered = games.filter(g =>
         g.name.toLowerCase().includes(filter.toLowerCase()) ||
@@ -114,9 +134,19 @@ export default function App() {
                             {runningCount} in esecuzione
                         </span>
                     )}
+                    <button
+                        className={`settings-gear${showSettings ? ' settings-gear--active' : ''}`}
+                        onClick={() => setShowSettings(s => !s)}
+                        title="Impostazioni"
+                        aria-label="Impostazioni"
+                    >⚙</button>
                 </div>
             </header>
 
+            {showSettings ? (
+                <SettingsPage settings={settings} onChange={saveSettings} />
+            ) : (
+            <>
             <div className="search-bar">
                 <input
                     className="search-input"
@@ -146,6 +176,7 @@ export default function App() {
                                     onOpenModal={() => setCompanionModal({ game: g })}
                                     onRemove={(exe) => RemoveCompanion(g.appId, exe).then(refreshCompanions)}
                                     onToggleFavorite={toggleFavorite}
+                                    onLaunch={launchCompanions}
                                 />
                             ))}
                         </div>
@@ -163,12 +194,15 @@ export default function App() {
                                     onOpenModal={() => setCompanionModal({ game: g })}
                                     onRemove={(exe) => RemoveCompanion(g.appId, exe).then(refreshCompanions)}
                                     onToggleFavorite={toggleFavorite}
+                                    onLaunch={launchCompanions}
                                 />
                             ))}
                         </div>
                     </>
                 )}
             </div>
+            </>
+            )}
 
             {companionModal && (
                 <CompanionModal
@@ -183,10 +217,12 @@ export default function App() {
     );
 }
 
-function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onRemove, onToggleFavorite }) {
+function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onRemove, onToggleFavorite, onLaunch }) {
     const isRunning = runningIds.has(game.appId);
     const proc = runningProcs[game.appId];
     const [imgSrc, setImgSrc] = useState(null);
+    const [launchFlash, setLaunchFlash] = useState(null); // null | 'ok' | 'empty'
+    const flashRef = useRef(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -197,8 +233,32 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
         return () => { cancelled = true; };
     }, [game.appId]);
 
+    useEffect(() => () => clearTimeout(flashRef.current), []);
+
+    const hasCompanions = companions.length > 0;
+
+    const handleLaunch = () => {
+        if (!hasCompanions) {
+            onOpenModal();
+            return;
+        }
+        Promise.resolve(onLaunch(game.appId)).then(started => {
+            setLaunchFlash(started > 0 ? 'ok' : 'busy');
+            clearTimeout(flashRef.current);
+            flashRef.current = setTimeout(() => setLaunchFlash(null), 1600);
+        });
+    };
+
+    const flashText = launchFlash === 'ok' ? '▶ Companion avviati'
+        : launchFlash === 'busy' ? '● Già in esecuzione' : '';
+
     return (
-        <div className={`game-card${isRunning ? ' game-card--running' : ''}`}>
+        <div
+            className={`game-card${isRunning ? ' game-card--running' : ''}${hasCompanions ? ' game-card--launchable' : ''}`}
+            onClick={handleLaunch}
+            title={hasCompanions ? 'Clic per lanciare i companion' : 'Nessun companion configurato — clic per aggiungerne'}
+        >
+            {launchFlash && <div className="card-launch-flash">{flashText}</div>}
             <div className="game-card__cover">
                 {imgSrc ? (
                     <img
@@ -235,12 +295,62 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
                         <button
                             className="companion-chip-remove"
                             title="Rimuovi"
-                            onClick={() => onRemove(c.exePath)}
+                            onClick={(e) => { e.stopPropagation(); onRemove(c.exePath); }}
                         >×</button>
                     </span>
                 ))}
-                <button className="add-companion-btn" onClick={onOpenModal}>+ Companion</button>
+                <button className="add-companion-btn" onClick={(e) => { e.stopPropagation(); onOpenModal(); }}>+ Companion</button>
             </div>
+        </div>
+    );
+}
+
+function SettingsPage({ settings, onChange }) {
+    const toggle = (key) => onChange({ ...settings, [key]: !settings[key] });
+
+    return (
+        <div className="settings-page">
+            <h2 className="settings-title">Impostazioni</h2>
+
+            <div className="settings-list">
+                <SettingRow
+                    label="Rilevamento automatico dei giochi"
+                    hint="Controlla in background i giochi Proton in esecuzione ed evidenzia il loro stato nella libreria."
+                    checked={settings.autoDetectGames}
+                    onToggle={() => toggle('autoDetectGames')}
+                />
+                <SettingRow
+                    label="Avvio automatico dei companion"
+                    hint="Lancia automaticamente i companion abbinati appena il gioco corrispondente viene rilevato in esecuzione."
+                    checked={settings.autoLaunchCompanions}
+                    onToggle={() => toggle('autoLaunchCompanions')}
+                />
+            </div>
+
+            <p className="settings-note">
+                Avvio manuale: clicca sulla cella di un gioco nella libreria per lanciare
+                i suoi companion in qualsiasi momento, anche con l'avvio automatico disattivato.
+            </p>
+        </div>
+    );
+}
+
+function SettingRow({ label, hint, checked, onToggle }) {
+    return (
+        <div className="setting-row" onClick={onToggle}>
+            <div className="setting-text">
+                <div className="setting-label">{label}</div>
+                <div className="setting-hint">{hint}</div>
+            </div>
+            <button
+                className={`setting-switch${checked ? ' setting-switch--on' : ''}`}
+                role="switch"
+                aria-checked={checked}
+                aria-label={label}
+                onClick={(e) => { e.stopPropagation(); onToggle(); }}
+            >
+                <span className="setting-switch-knob" />
+            </button>
         </div>
     );
 }

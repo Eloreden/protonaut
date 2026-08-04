@@ -30,12 +30,20 @@ export function GetRunningProtonProcesses() {
   return window['go']['main']['App']['GetRunningProtonProcesses']();
 }
 
+export function GetSettings() {
+  return window['go']['main']['App']['GetSettings']();
+}
+
 export function GetSteamStatus() {
   return window['go']['main']['App']['GetSteamStatus']();
 }
 
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
+}
+
+export function LaunchCompanions(arg1) {
+  return window['go']['main']['App']['LaunchCompanions'](arg1);
 }
 
 export function RemoveCompanion(arg1, arg2) {
@@ -48,4 +56,8 @@ export function SelectCompanionExe() {
 
 export function SetFavorite(arg1, arg2) {
   return window['go']['main']['App']['SetFavorite'](arg1, arg2);
+}
+
+export function SetSettings(arg1) {
+  return window['go']['main']['App']['SetSettings'](arg1);
 }

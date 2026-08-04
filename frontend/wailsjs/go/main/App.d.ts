@@ -17,12 +17,18 @@ export function GetMonitors():Promise<Array<backend.MonitorInfo>>;
 
 export function GetRunningProtonProcesses():Promise<Array<models.ProtonProcess>>;
 
+export function GetSettings():Promise<models.Settings>;
+
 export function GetSteamStatus():Promise<models.SteamStatus>;
 
 export function Greet(arg1:string):Promise<string>;
+
+export function LaunchCompanions(arg1:string):Promise<number>;
 
 export function RemoveCompanion(arg1:string,arg2:string):Promise<void>;
 
 export function SelectCompanionExe():Promise<string>;
 
 export function SetFavorite(arg1:string,arg2:boolean):Promise<void>;
+
+export function SetSettings(arg1:models.Settings):Promise<void>;

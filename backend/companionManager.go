@@ -16,7 +16,8 @@ const configFile = ".config/Protonaut/companions.json"
 // CompanionManager gestisce la config persistente dei companion e il watcher
 // che li lancia automaticamente quando il gioco corrispondente è in esecuzione.
 type CompanionManager struct {
-	scanner *Scanner
+	scanner  *Scanner
+	settings *SettingsManager
 
 	mu         sync.RWMutex
 	companions map[string][]models.Companion // appId → lista companion
@@ -27,9 +28,10 @@ type CompanionManager struct {
 	launchMu sync.Mutex
 }
 
-func NewCompanionManager(s *Scanner) *CompanionManager {
+func NewCompanionManager(s *Scanner, settings *SettingsManager) *CompanionManager {
 	cm := &CompanionManager{
 		scanner:    s,
+		settings:   settings,
 		companions: map[string][]models.Companion{},
 		launched:   map[string]bool{},
 	}
@@ -163,6 +165,12 @@ func (cm *CompanionManager) watchLoop() {
 		}
 		prevRunning = currentRunning
 
+		// Auto-avvio disattivato: nessun lancio automatico, ma continuiamo a
+		// tracciare i giochi in esecuzione per il reset dei "già lanciati".
+		if !cm.settings.GetSettings().AutoLaunchCompanions {
+			continue
+		}
+
 		// Per ogni gioco in esecuzione con companion configurati
 		cm.mu.RLock()
 		toCheck := make(map[string][]models.Companion)
@@ -204,6 +212,33 @@ func (cm *CompanionManager) clearLaunched(appId string) {
 		delete(cm.launched, appId+"|"+c.ExePath)
 	}
 	cm.launchMu.Unlock()
+}
+
+// LaunchCompanionsFor lancia manualmente tutti i companion configurati per
+// l'appId dato (usato dal clic sulla cella del gioco). Salta i companion già
+// in esecuzione nella sessione corrente. Restituisce quanti ne ha avviati.
+func (cm *CompanionManager) LaunchCompanionsFor(appId string) int {
+	cm.mu.RLock()
+	list := make([]models.Companion, len(cm.companions[appId]))
+	copy(list, cm.companions[appId])
+	cm.mu.RUnlock()
+
+	started := 0
+	for _, c := range list {
+		key := appId + "|" + c.ExePath
+		cm.launchMu.Lock()
+		already := cm.launched[key]
+		if !already {
+			cm.launched[key] = true
+		}
+		cm.launchMu.Unlock()
+
+		if !already {
+			started++
+			go cm.launch(appId, c.ExePath)
+		}
+	}
+	return started
 }
 
 // launch esegue protontricks-launch in background e aspetta la fine.

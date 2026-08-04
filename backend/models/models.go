@@ -30,6 +30,16 @@ type Companion struct {
 	Name    string `json:"name"` // basename dell'exe
 }
 
+// Settings = preferenze globali dell'app, persistite in settings.json.
+type Settings struct {
+	// AutoLaunchCompanions: se true il watcher lancia automaticamente i
+	// companion quando il gioco abbinato viene rilevato in esecuzione.
+	AutoLaunchCompanions bool `json:"autoLaunchCompanions"`
+	// AutoDetectGames: se true il frontend rileva in polling i giochi in
+	// esecuzione e ne evidenzia lo stato.
+	AutoDetectGames bool `json:"autoDetectGames"`
+}
+
 // ProtonProcess = un processo in esecuzione lanciato da Steam/Proton,
 // mappato al suo AppID tramite /proc/<pid>/environ. È il target su cui
 // successivamente si effettua l'iniezione del codice.

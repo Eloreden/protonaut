@@ -521,3 +521,130 @@
     border-color: #e05c5c;
     color: #e05c5c;
 }
+
+/* ── Settings gear ── */
+.settings-gear {
+    background: transparent;
+    border: none;
+    color: #7a9bb5;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s, transform 0.3s;
+}
+.settings-gear:hover {
+    color: #fff;
+    background: var(--bg-hover);
+    transform: rotate(45deg);
+}
+.settings-gear--active {
+    color: var(--running-color);
+}
+
+/* ── Settings page ── */
+.settings-page {
+    flex: 1;
+    overflow-y: auto;
+    padding: 26px 22px;
+}
+.settings-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 20px;
+}
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 720px;
+}
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: #1e2d3d;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+.setting-row:hover { border-color: #2a3f5f; }
+.setting-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+.setting-hint {
+    font-size: 13px;
+    color: #7a9bb5;
+    line-height: 1.4;
+}
+.setting-switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 13px;
+    border: none;
+    background: #2a3f5f;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.setting-switch--on { background: var(--running-color); }
+.setting-switch-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s;
+}
+.setting-switch--on .setting-switch-knob { left: 23px; }
+.settings-note {
+    max-width: 720px;
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: rgba(87,203,222,0.06);
+    border: 1px solid rgba(87,203,222,0.25);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #9fb6cc;
+    line-height: 1.5;
+}
+
+/* ── Launchable card + flash ── */
+.game-card--launchable { cursor: pointer; }
+.game-card {
+    position: relative;
+}
+.card-launch-flash {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    z-index: 5;
+    text-align: center;
+    background: rgba(23,29,37,0.92);
+    border: 1px solid rgba(87,203,222,0.5);
+    color: var(--running-color);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 8px;
+    border-radius: 6px;
+    animation: flashfade 1.6s ease-out forwards;
+    pointer-events: none;
+}
+@keyframes flashfade {
+    0%   { opacity: 0; transform: translateY(-4px); }
+    12%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+}

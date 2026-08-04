@@ -89,6 +89,20 @@ export namespace models {
 	        this.isGameExe = source["isGameExe"];
 	    }
 	}
+	export class Settings {
+	    autoLaunchCompanions: boolean;
+	    autoDetectGames: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Settings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.autoLaunchCompanions = source["autoLaunchCompanions"];
+	        this.autoDetectGames = source["autoDetectGames"];
+	    }
+	}
 	export class SteamStatus {
 	    found: boolean;
 	    steamPath: string;
