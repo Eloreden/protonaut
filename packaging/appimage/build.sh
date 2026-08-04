@@ -62,6 +62,12 @@ export DEPLOY_GTK_VERSION=3
 export APPIMAGE_EXTRACT_AND_RUN=1
 export VERSION
 
+# Embed update information so AppImageUpdate/AppImageLauncher can update the
+# installed AppImage in place (no duplicate files) even as the versioned
+# filename changes. The '*' matches the version; 'latest' resolves the newest
+# GitHub Release. appimagetool also emits a matching .zsync file next to it.
+export UPDATE_INFORMATION="${UPDATE_INFORMATION:-gh-releases-zsync|Eloreden|protonaut|latest|Protonaut-*-x86_64.AppImage}"
+
 (cd "$BUILD_DIR" && "$LINUXDEPLOY_EXTRACTED/AppRun" \
     --appdir "$APPDIR" \
     --executable "$APPDIR/usr/bin/protonaut" \
@@ -70,4 +76,4 @@ export VERSION
     --plugin gtk \
     --output appimage)
 
-echo "==> Done: $BUILD_DIR/Protonaut-$VERSION-x86_64.AppImage"
+echo "==> Done: $BUILD_DIR/Protonaut-$VERSION-x86_64.AppImage (+ .zsync)"

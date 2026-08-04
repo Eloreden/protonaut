@@ -91,7 +91,8 @@ jobs:
             --title "$VERSION" \
             --target "$GITHUB_SHA" \
             --generate-notes \
-            "packaging/appimage/build/Protonaut-${VERSION}-x86_64.AppImage"
+            "packaging/appimage/build/Protonaut-${VERSION}-x86_64.AppImage" \
+            "packaging/appimage/build/Protonaut-${VERSION}-x86_64.AppImage.zsync"
 
   publish-aur:
     needs: build
