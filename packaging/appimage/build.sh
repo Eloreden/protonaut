@@ -44,8 +44,9 @@ if [ ! -x "$LINUXDEPLOY_EXTRACTED/AppRun" ]; then
     ln -sf "$(command -v strip)" "$LINUXDEPLOY_EXTRACTED/usr/bin/strip"
 fi
 
-echo "==> Building protonaut (webkit2gtk-4.1, trimpath)"
-(cd "$ROOT_DIR" && wails build -tags webkit2_41 -trimpath -ldflags "-w -s")
+echo "==> Building protonaut (webkit2gtk-4.1, trimpath, version=$VERSION)"
+(cd "$ROOT_DIR" && wails build -tags webkit2_41 -trimpath \
+    -ldflags "-w -s -X main.Version=$VERSION")
 
 echo "==> Assembling AppDir"
 rm -rf "$APPDIR"

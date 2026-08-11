@@ -543,6 +543,125 @@
     color: var(--running-color);
 }
 
+/* ── Update badge (header) ── */
+.update-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(87,203,222,0.12);
+    border: 1px solid rgba(87,203,222,0.5);
+    color: var(--running-color);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    padding: 5px 11px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.update-badge:hover { background: rgba(87,203,222,0.22); }
+
+.settings-gear--dot { position: relative; }
+.settings-gear--dot::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--running-color);
+    border: 2px solid var(--bg-dark);
+}
+
+/* ── Update card (settings) ── */
+.update-card {
+    max-width: 720px;
+    background: #1e2d3d;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 22px;
+}
+.update-card--available {
+    border-color: rgba(87,203,222,0.5);
+    box-shadow: 0 0 14px rgba(87,203,222,0.1);
+}
+.update-card-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.update-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+.update-card-sub {
+    font-size: 13px;
+    color: #7a9bb5;
+}
+.update-card-sub code {
+    background: #171d25;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+.update-link {
+    color: var(--running-color);
+    cursor: pointer;
+    text-decoration: underline;
+}
+.update-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.update-btn {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.update-btn:disabled { opacity: 0.5; cursor: default; }
+.update-btn--ghost {
+    background: transparent;
+    border-color: #2a3f5f;
+    color: #c7d5e0;
+}
+.update-btn--ghost:hover:not(:disabled) { border-color: var(--running-color); }
+.update-btn--primary {
+    background: var(--running-color);
+    color: #10171f;
+}
+.update-btn--primary:hover:not(:disabled) { background: #7bdcec; }
+.update-msg {
+    margin-top: 12px;
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    background: #171d25;
+    color: #9fb6cc;
+}
+.update-msg--error { color: #e05c5c; }
+.update-msg--done { color: var(--running-color); }
+.update-note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #7a9bb5;
+}
+.update-note code {
+    background: #171d25;
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
 /* ── Settings page ── */
 .settings-page {
     flex: 1;

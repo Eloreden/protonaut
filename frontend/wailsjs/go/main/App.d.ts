@@ -5,6 +5,10 @@ import {backend} from '../models';
 
 export function AddCompanion(arg1:string,arg2:string):Promise<void>;
 
+export function ApplyUpdate():Promise<string>;
+
+export function CheckForUpdate():Promise<models.UpdateStatus>;
+
 export function GetCompanions():Promise<Record<string, Array<models.Companion>>>;
 
 export function GetCoverImage(arg1:string):Promise<string>;
@@ -21,11 +25,17 @@ export function GetSettings():Promise<models.Settings>;
 
 export function GetSteamStatus():Promise<models.SteamStatus>;
 
+export function GetVersion():Promise<string>;
+
 export function Greet(arg1:string):Promise<string>;
 
 export function LaunchCompanions(arg1:string):Promise<number>;
 
+export function OpenReleaseURL(arg1:string):Promise<void>;
+
 export function RemoveCompanion(arg1:string,arg2:string):Promise<void>;
+
+export function RestartApp():Promise<void>;
 
 export function SelectCompanionExe():Promise<string>;
 

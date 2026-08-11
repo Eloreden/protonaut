@@ -12,6 +12,10 @@ import {
     GetSettings,
     SetSettings,
     LaunchCompanions,
+    CheckForUpdate,
+    ApplyUpdate,
+    RestartApp,
+    OpenReleaseURL,
 } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import './App.css';
@@ -36,8 +40,9 @@ export default function App() {
     const [error, setError] = useState(null);
     const [companionModal, setCompanionModal] = useState(null); // { game }
     const [currentMonitor, setCurrentMonitor] = useState(null);
-    const [settings, setSettings] = useState({ autoLaunchCompanions: true, autoDetectGames: true });
+    const [settings, setSettings] = useState({ autoLaunchCompanions: true, autoDetectGames: true, startOnBoot: false });
     const [showSettings, setShowSettings] = useState(false);
+    const [update, setUpdate] = useState(null); // UpdateStatus dal backend
     const intervalRef = useRef(null);
 
     const refreshCompanions = useCallback(() => {
@@ -63,15 +68,20 @@ export default function App() {
         SetSettings(next).catch(() => {});
     }, []);
 
+    const checkUpdate = useCallback(() => {
+        return CheckForUpdate().then(u => { setUpdate(u); return u; }).catch(() => null);
+    }, []);
+
     useEffect(() => {
         refreshGames();
         refreshCompanions();
         GetSettings().then(s => { if (s) setSettings(s); }).catch(() => {});
+        checkUpdate();
         GetMonitors().then(monitors => {
             const primary = monitors?.find(m => m.primary) || monitors?.[0];
             if (primary) setCurrentMonitor(primary);
         }).catch(() => {});
-    }, [refreshGames, refreshCompanions]);
+    }, [refreshGames, refreshCompanions, checkUpdate]);
 
     // Ascolta i cambi di monitor e applica correzione zoom se necessario
     useEffect(() => {
@@ -134,8 +144,18 @@ export default function App() {
                             {runningCount} in esecuzione
                         </span>
                     )}
+                    {update?.updateAvailable && !showSettings && (
+                        <button
+                            className="update-badge"
+                            onClick={() => setShowSettings(true)}
+                            title={`Nuova versione ${update.latestVersion} disponibile`}
+                        >
+                            <span className="pulse-dot" />
+                            Aggiornamento {update.latestVersion}
+                        </button>
+                    )}
                     <button
-                        className={`settings-gear${showSettings ? ' settings-gear--active' : ''}`}
+                        className={`settings-gear${showSettings ? ' settings-gear--active' : ''}${update?.updateAvailable ? ' settings-gear--dot' : ''}`}
                         onClick={() => setShowSettings(s => !s)}
                         title="Impostazioni"
                         aria-label="Impostazioni"
@@ -144,7 +164,8 @@ export default function App() {
             </header>
 
             {showSettings ? (
-                <SettingsPage settings={settings} onChange={saveSettings} />
+                <SettingsPage settings={settings} onChange={saveSettings}
+                    update={update} onCheckUpdate={checkUpdate} />
             ) : (
             <>
             <div className="search-bar">
@@ -305,12 +326,14 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
     );
 }
 
-function SettingsPage({ settings, onChange }) {
+function SettingsPage({ settings, onChange, update, onCheckUpdate }) {
     const toggle = (key) => onChange({ ...settings, [key]: !settings[key] });
 
     return (
         <div className="settings-page">
             <h2 className="settings-title">Impostazioni</h2>
+
+            <UpdateSection update={update} onCheckUpdate={onCheckUpdate} />
 
             <div className="settings-list">
                 <SettingRow
@@ -325,12 +348,101 @@ function SettingsPage({ settings, onChange }) {
                     checked={settings.autoLaunchCompanions}
                     onToggle={() => toggle('autoLaunchCompanions')}
                 />
+                <SettingRow
+                    label="Avvia all'avvio del PC"
+                    hint="Aggiunge Protonaut agli avvii automatici del sistema, così parte da solo al login."
+                    checked={settings.startOnBoot}
+                    onToggle={() => toggle('startOnBoot')}
+                />
             </div>
 
             <p className="settings-note">
                 Avvio manuale: clicca sulla cella di un gioco nella libreria per lanciare
                 i suoi companion in qualsiasi momento, anche con l'avvio automatico disattivato.
             </p>
+        </div>
+    );
+}
+
+function UpdateSection({ update, onCheckUpdate }) {
+    const [checking, setChecking] = useState(false);
+    const [phase, setPhase] = useState('idle'); // idle | updating | done | error
+    const [message, setMessage] = useState('');
+
+    const recheck = () => {
+        setChecking(true);
+        Promise.resolve(onCheckUpdate()).finally(() => setChecking(false));
+    };
+
+    const doUpdate = () => {
+        setPhase('updating');
+        setMessage('Download e applicazione dell\'aggiornamento in corso...');
+        ApplyUpdate()
+            .then(() => { setPhase('done'); setMessage('Aggiornamento applicato. Riavvia per usarlo.'); })
+            .catch((e) => { setPhase('error'); setMessage(String(e)); });
+    };
+
+    const cur = update?.currentVersion || '—';
+    const available = update?.updateAvailable;
+
+    return (
+        <div className={`update-card${available ? ' update-card--available' : ''}`}>
+            <div className="update-card-main">
+                <div className="update-card-text">
+                    <div className="update-card-title">
+                        {available
+                            ? `Aggiornamento disponibile: ${update.latestVersion}`
+                            : 'Sei all\'ultima versione'}
+                    </div>
+                    <div className="update-card-sub">
+                        Versione attuale: <code>{cur}</code>
+                        {available && update?.releaseUrl && (
+                            <>  ·  <a className="update-link"
+                                onClick={() => OpenReleaseURL(update.releaseUrl)}>novità</a></>
+                        )}
+                    </div>
+                </div>
+
+                <div className="update-card-actions">
+                    <button className="update-btn update-btn--ghost"
+                        onClick={recheck} disabled={checking || phase === 'updating'}>
+                        {checking ? 'Controllo...' : 'Controlla'}
+                    </button>
+
+                    {available && phase !== 'done' && (
+                        update?.canSelfUpdate ? (
+                            <button className="update-btn update-btn--primary"
+                                onClick={doUpdate} disabled={phase === 'updating'}>
+                                {phase === 'updating' ? 'Aggiornamento...' : 'Aggiorna ora'}
+                            </button>
+                        ) : (
+                            <button className="update-btn update-btn--primary"
+                                onClick={() => update?.releaseUrl && OpenReleaseURL(update.releaseUrl)}>
+                                Scarica
+                            </button>
+                        )
+                    )}
+
+                    {phase === 'done' && (
+                        <button className="update-btn update-btn--primary" onClick={() => RestartApp()}>
+                            Riavvia ora
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {message && <div className={`update-msg update-msg--${phase}`}>{message}</div>}
+
+            {available && !update?.canSelfUpdate && update?.isAppImage && (
+                <div className="update-note">
+                    Installa <code>AppImageUpdate</code> (o AppImageLauncher) per aggiornare dall'app.
+                </div>
+            )}
+            {available && !update?.isAppImage && (
+                <div className="update-note">
+                    Installazione da pacchetto: aggiorna tramite il gestore pacchetti del sistema (es. Octopi / paru).
+                </div>
+            )}
         </div>
     );
 }

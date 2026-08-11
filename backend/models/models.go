@@ -38,6 +38,20 @@ type Settings struct {
 	// AutoDetectGames: se true il frontend rileva in polling i giochi in
 	// esecuzione e ne evidenzia lo stato.
 	AutoDetectGames bool `json:"autoDetectGames"`
+	// StartOnBoot: se true l'app viene avviata automaticamente al login
+	// tramite un file .desktop in ~/.config/autostart.
+	StartOnBoot bool `json:"startOnBoot"`
+}
+
+// UpdateStatus = esito del controllo aggiornamenti contro l'ultima release.
+type UpdateStatus struct {
+	CurrentVersion  string `json:"currentVersion"`
+	LatestVersion   string `json:"latestVersion"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+	IsAppImage      bool   `json:"isAppImage"`    // gira come AppImage
+	CanSelfUpdate   bool   `json:"canSelfUpdate"` // AppImage + appimageupdatetool presente
+	ReleaseURL      string `json:"releaseUrl"`
+	ReleaseNotes    string `json:"releaseNotes"`
 }
 
 // ProtonProcess = un processo in esecuzione lanciato da Steam/Proton,

@@ -6,6 +6,14 @@ export function AddCompanion(arg1, arg2) {
   return window['go']['main']['App']['AddCompanion'](arg1, arg2);
 }
 
+export function ApplyUpdate() {
+  return window['go']['main']['App']['ApplyUpdate']();
+}
+
+export function CheckForUpdate() {
+  return window['go']['main']['App']['CheckForUpdate']();
+}
+
 export function GetCompanions() {
   return window['go']['main']['App']['GetCompanions']();
 }
@@ -38,6 +46,10 @@ export function GetSteamStatus() {
   return window['go']['main']['App']['GetSteamStatus']();
 }
 
+export function GetVersion() {
+  return window['go']['main']['App']['GetVersion']();
+}
+
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
@@ -46,8 +58,16 @@ export function LaunchCompanions(arg1) {
   return window['go']['main']['App']['LaunchCompanions'](arg1);
 }
 
+export function OpenReleaseURL(arg1) {
+  return window['go']['main']['App']['OpenReleaseURL'](arg1);
+}
+
 export function RemoveCompanion(arg1, arg2) {
   return window['go']['main']['App']['RemoveCompanion'](arg1, arg2);
+}
+
+export function RestartApp() {
+  return window['go']['main']['App']['RestartApp']();
 }
 
 export function SelectCompanionExe() {

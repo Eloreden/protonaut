@@ -92,6 +92,7 @@ export namespace models {
 	export class Settings {
 	    autoLaunchCompanions: boolean;
 	    autoDetectGames: boolean;
+	    startOnBoot: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -101,6 +102,7 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.autoLaunchCompanions = source["autoLaunchCompanions"];
 	        this.autoDetectGames = source["autoDetectGames"];
+	        this.startOnBoot = source["startOnBoot"];
 	    }
 	}
 	export class SteamStatus {
@@ -119,6 +121,30 @@ export namespace models {
 	        this.steamPath = source["steamPath"];
 	        this.vdfPath = source["vdfPath"];
 	        this.reasons = source["reasons"];
+	    }
+	}
+	export class UpdateStatus {
+	    currentVersion: string;
+	    latestVersion: string;
+	    updateAvailable: boolean;
+	    isAppImage: boolean;
+	    canSelfUpdate: boolean;
+	    releaseUrl: string;
+	    releaseNotes: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.updateAvailable = source["updateAvailable"];
+	        this.isAppImage = source["isAppImage"];
+	        this.canSelfUpdate = source["canSelfUpdate"];
+	        this.releaseUrl = source["releaseUrl"];
+	        this.releaseNotes = source["releaseNotes"];
 	    }
 	}
 

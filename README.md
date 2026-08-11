@@ -14,7 +14,10 @@ Protonaut doesn't launch your games — Steam already does that. Instead, it sit
 - **Cover art** (`backend/coverCache.go`): on first view, resolves the real header image URL via the Steam Store API and caches it to `~/.cache/Protonaut/covers/{appid}.jpg`. This avoids a known issue with the naive CDN URL pattern, which can return a stale/placeholder community-hub image instead of a proper 404.
 - **Favorites** (`backend/favoritesManager.go`): starred games are stored locally in `~/.config/Protonaut/favorites.json`. This is intentional — Steam's own collections are stored in `localconfig.vdf` under hashed IDs that can't be reliably mapped back to an AppID, so favorites are managed entirely by Protonaut instead.
 - **Process detection**: polls `/proc/<pid>/environ` for running processes to find `SteamAppId`, which identifies which game (if any) is currently running under Proton, and displays a "running" badge with its PID.
-- **Companion launch** (`backend/companionManager.go`): companions are configured per-game in `~/.config/Protonaut/companions.json`. When a paired game is detected as running, its companion is launched automatically (e.g. `protontricks-launch --no-bwrap --appid <id> <exe>`); companions can also be added/removed manually from the UI via a native file picker.
+- **Companion launch** (`backend/companionManager.go`): companions are configured per-game in `~/.config/Protonaut/companions.json`. When a paired game is detected as running, its companion is launched automatically (e.g. `protontricks-launch --no-bwrap --appid <id> <exe>`); companions can also be added/removed manually from the UI via a native file picker. Clicking a game's cell launches its companions on demand — handy when automatic launch is disabled.
+- **Settings** (`backend/settingsManager.go`): global preferences are stored in `~/.config/Protonaut/settings.json` and edited from the gear icon in the header. Toggles cover automatic game detection, automatic companion launch, and "start on boot".
+- **Start on boot** (`backend/autostart.go`): when enabled, writes an XDG autostart entry to `~/.config/autostart/protonaut.desktop`. For AppImage installs it records the real `$APPIMAGE` path and re-syncs it on every startup, so autostart keeps working even though the AppImage's filename changes with each version.
+- **Updates** (`backend/updater.go`): checks the GitHub Releases API and compares the running version against the latest tag. AppImage installs can update in place from the app (via `appimageupdatetool`, delta download over zsync); package-manager installs (AUR) are pointed to the system updater instead. The install type is detected at runtime through `$APPIMAGE`, so a single build behaves correctly in both cases.
 - **Display scaling** (`backend/displayInfo.go`): detects the current monitor and its fractional scale (via `kscreen-doctor --outputs` on KDE) and applies matching CSS zoom, keeping the UI crisp across multi-monitor / HiDPI setups.
 
 ## Features
@@ -24,7 +27,9 @@ Protonaut doesn't launch your games — Steam already does that. Instead, it sit
 - Disk-cached cover art with automatic stale-image recovery
 - Live detection of running Proton games via `/proc`
 - Automatic companion tool launch tied to the detected running game
-- Manual companion management (add/remove) per game, from the UI
+- Manual companion management (add/remove) per game, plus click-to-launch on demand
+- Settings page: toggle auto-detection, auto-launch, and start-on-boot
+- In-app update check with one-click update for AppImage installs
 - Multi-monitor DPI/fractional-scaling awareness
 
 ## Requirements
@@ -71,15 +76,22 @@ Download the AppImage from the [releases page](https://github.com/Eloreden/proto
 ```bash
 git clone https://github.com/Eloreden/protonaut.git
 cd protonaut
-wails build
+wails build -tags webkit2_41
 ```
 
 The built binary is placed in `build/bin/`.
 
+> **Note on the `webkit2_41` tag:** on Arch-based distros (and anywhere WebKitGTK 4.0 has been dropped) Wails must be told to link against `webkit2gtk-4.1`. Without `-tags webkit2_41` the link step fails with unresolved `Jxl*` symbols (WebKitGTK 4.0 pulls in an old `libjxl`), and with `wails dev` the process stays alive but the window never opens. The release pipeline and the AUR package already build with this tag.
+
+## Updating
+
+- **AppImage** — open Settings (gear icon) and use **Check** / **Update now**. Updating requires [AppImageUpdate](https://github.com/AppImage/AppImageUpdate) (bundled with AppImageLauncher); it downloads only the delta and replaces the file in place, so it works even though the filename changes between versions. Without it, the app shows the available version and links to the release.
+- **AUR** — update through your package manager as usual (e.g. `yay -Syu` / Octopi). As a `-git` VCS package it always builds from the latest commit.
+
 ## Development
 
 ```bash
-wails dev
+wails dev -tags webkit2_41
 ```
 
 This runs the app with hot reload for the React frontend.
@@ -87,7 +99,7 @@ This runs the app with hot reload for the React frontend.
 ## Building
 
 ```bash
-wails build
+wails build -tags webkit2_41
 ```
 
 ## License

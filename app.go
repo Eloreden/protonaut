@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 	"sort"
 	"time"
 
@@ -10,6 +12,10 @@ import (
 	"Protonaut/backend/models"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+// Version è la versione dell'app, incisa a build-time via
+// -ldflags "-X main.Version=v0.1.2". In sviluppo resta "dev".
+var Version = "dev"
 
 // App struct
 type App struct {
@@ -82,6 +88,9 @@ func (a *App) GetCoverImage(appId string) (string, error) {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.companionManager.StartWatcher()
+	// Riallinea il file di autostart alla preferenza salvata: se attivo,
+	// riscrive Exec= col path corrente (l'AppImage cambia nome a ogni versione).
+	_ = backend.SyncAutostart(a.settingsManager.GetSettings().StartOnBoot)
 	go a.watchDisplayScale()
 }
 
@@ -199,15 +208,58 @@ func (a *App) GetSettings() models.Settings {
 	return a.settingsManager.GetSettings()
 }
 
-// SetSettings aggiorna e persiste le preferenze globali.
+// SetSettings aggiorna e persiste le preferenze globali e sincronizza il file
+// di autostart in base al flag StartOnBoot.
 func (a *App) SetSettings(s models.Settings) error {
-	return a.settingsManager.SetSettings(s)
+	if err := a.settingsManager.SetSettings(s); err != nil {
+		return err
+	}
+	return backend.SyncAutostart(s.StartOnBoot)
 }
 
 // LaunchCompanions lancia manualmente i companion configurati per l'appId dato
 // (clic sulla cella del gioco). Restituisce quanti ne ha avviati.
 func (a *App) LaunchCompanions(appId string) int {
 	return a.companionManager.LaunchCompanionsFor(appId)
+}
+
+// GetVersion restituisce la versione corrente dell'app.
+func (a *App) GetVersion() string {
+	return Version
+}
+
+// CheckForUpdate confronta la versione corrente con l'ultima release GitHub.
+func (a *App) CheckForUpdate() (models.UpdateStatus, error) {
+	return backend.CheckForUpdate(Version)
+}
+
+// ApplyUpdate aggiorna l'AppImage in place tramite appimageupdatetool.
+// Disponibile solo quando l'app gira come AppImage.
+func (a *App) ApplyUpdate() (string, error) {
+	return backend.ApplyUpdate()
+}
+
+// RestartApp riavvia l'app (usato dopo un aggiornamento). Lancia una nuova
+// istanza dell'AppImage aggiornato e chiude quella corrente.
+func (a *App) RestartApp() error {
+	appimage := os.Getenv("APPIMAGE")
+	if appimage == "" {
+		runtime.Quit(a.ctx)
+		return nil
+	}
+	cmd := exec.Command(appimage)
+	cmd.Stdout, cmd.Stderr = nil, nil
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	_ = cmd.Process.Release()
+	runtime.Quit(a.ctx)
+	return nil
+}
+
+// OpenReleaseURL apre la pagina della release nel browser di sistema.
+func (a *App) OpenReleaseURL(url string) {
+	runtime.BrowserOpenURL(a.ctx, url)
 }
 
 // Greet returns a greeting for the given name
