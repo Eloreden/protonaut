@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22344a"/>
+      <stop offset="1" stop-color="#0d151f"/>
+    </linearGradient>
+    <linearGradient id="shell" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#dde6ef"/>
+      <stop offset="1" stop-color="#9fb2c6"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9d6e3"/>
+      <stop offset="1" stop-color="#7f93a8"/>
+    </linearGradient>
+    <radialGradient id="visor" cx="0.4" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#1d4766"/>
+      <stop offset="0.6" stop-color="#0f2638"/>
+      <stop offset="1" stop-color="#08131d"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#57cbde" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#57cbde" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="visorClip">
+      <rect x="292" y="330" width="440" height="330" rx="165"/>
+    </clipPath>
+  </defs>
+
+  <rect x="56" y="56" width="912" height="912" rx="200" fill="url(#bg)"/>
+
+  <g fill="#ffffff">
+    <circle cx="190" cy="210" r="7" opacity="0.7"/>
+    <circle cx="840" cy="180" r="5" opacity="0.5"/>
+    <circle cx="860" cy="760" r="6" opacity="0.45"/>
+    <circle cx="160" cy="700" r="4" opacity="0.4"/>
+    <circle cx="780" cy="300" r="3" opacity="0.6"/>
+  </g>
+
+  <rect x="312" y="700" width="400" height="180" rx="50" fill="url(#ring)"/>
+  <rect x="312" y="826" width="400" height="16" fill="#6c8096" opacity="0.55"/>
+
+  <rect x="196" y="440" width="70" height="170" rx="30" fill="url(#ring)"/>
+  <rect x="758" y="440" width="70" height="170" rx="30" fill="url(#ring)"/>
+
+  <circle cx="512" cy="500" r="300" fill="url(#shell)"/>
+  <path d="M290 330 A262 262 0 0 1 520 240" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" opacity="0.9"/>
+
+  <rect x="280" y="318" width="464" height="354" rx="177" fill="#6c8096"/>
+  <rect x="292" y="330" width="440" height="330" rx="165" fill="url(#visor)"/>
+
+  <g clip-path="url(#visorClip)">
+    <circle cx="512" cy="495" r="150" fill="url(#glow)" opacity="0.35"/>
+    <ellipse cx="512" cy="495" rx="170" ry="62" transform="rotate(-22 512 495)" fill="none" stroke="#57cbde" stroke-width="18"/>
+    <circle cx="512" cy="495" r="95" fill="url(#glow)"/>
+    <circle cx="512" cy="495" r="48" fill="#bff3fb"/>
+    <circle cx="512" cy="495" r="48" fill="none" stroke="#57cbde" stroke-width="8"/>
+    <circle cx="661" cy="421" r="40" fill="url(#glow)"/>
+    <circle cx="661" cy="421" r="20" fill="#ffffff"/>
+    <path d="M350 420 Q380 360 460 345" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" opacity="0.35"/>
+  </g>
+</svg>
