@@ -693,6 +693,20 @@
     transition: border-color 0.15s;
 }
 .setting-row:hover { border-color: #2a3f5f; }
+.setting-row--static { cursor: default; }
+.setting-select {
+    flex-shrink: 0;
+    min-width: 140px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #171d25;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+.setting-select:focus { outline: none; border-color: var(--running-color); }
 .setting-label {
     font-size: 15px;
     font-weight: 700;

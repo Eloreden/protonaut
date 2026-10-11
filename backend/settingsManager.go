@@ -26,6 +26,7 @@ func NewSettingsManager() *SettingsManager {
 		},
 	}
 	sm.load()
+	SetLanguage(sm.settings.Language)
 	return sm
 }
 
@@ -70,5 +71,6 @@ func (sm *SettingsManager) SetSettings(s models.Settings) error {
 	sm.mu.Lock()
 	sm.settings = s
 	sm.mu.Unlock()
+	SetLanguage(s.Language)
 	return sm.save()
 }

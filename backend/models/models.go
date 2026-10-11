@@ -41,6 +41,9 @@ type Settings struct {
 	// StartOnBoot: se true l'app viene avviata automaticamente al login
 	// tramite un file .desktop in ~/.config/autostart.
 	StartOnBoot bool `json:"startOnBoot"`
+	// Language: codice lingua dell'interfaccia ("it", "en"); vuoto = segue
+	// la lingua di sistema.
+	Language string `json:"language"`
 }
 
 // UpdateStatus = esito del controllo aggiornamenti contro l'ultima release.

@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -214,7 +215,7 @@ func (s *Scanner) GetSteamStatus() models.SteamStatus {
 func (s *Scanner) GetLibraries() ([]models.Library, error) {
 	_, vdf, _ := s.findLibraryFoldersVDF()
 	if vdf == "" {
-		return nil, fmt.Errorf("libraryfolders.vdf non trovato in nessuna root Steam nota")
+		return nil, errors.New(T("err.vdfNotFound"))
 	}
 	data, err := os.ReadFile(vdf)
 	if err != nil {

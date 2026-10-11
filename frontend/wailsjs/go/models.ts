@@ -93,6 +93,7 @@ export namespace models {
 	    autoLaunchCompanions: boolean;
 	    autoDetectGames: boolean;
 	    startOnBoot: boolean;
+	    language: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -103,6 +104,7 @@ export namespace models {
 	        this.autoLaunchCompanions = source["autoLaunchCompanions"];
 	        this.autoDetectGames = source["autoDetectGames"];
 	        this.startOnBoot = source["startOnBoot"];
+	        this.language = source["language"];
 	    }
 	}
 	export class SteamStatus {

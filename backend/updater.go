@@ -2,6 +2,7 @@ package backend
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -81,11 +82,11 @@ func CheckForUpdate(current string) (models.UpdateStatus, error) {
 // in place tramite il delta zsync. Restituisce l'output dello strumento.
 func ApplyUpdate() (string, error) {
 	if !IsAppImage() {
-		return "", fmt.Errorf("l'aggiornamento in-app è disponibile solo per la versione AppImage")
+		return "", errors.New(T("err.updateAppImageOnly"))
 	}
 	tool := appImageUpdateTool()
 	if tool == "" {
-		return "", fmt.Errorf("AppImageUpdate non trovato: installa 'appimageupdate' o AppImageLauncher")
+		return "", errors.New(T("err.appImageUpdateMissing"))
 	}
 	appimage := os.Getenv("APPIMAGE")
 

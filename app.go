@@ -194,10 +194,10 @@ func (a *App) RemoveCompanion(appId string, exePath string) error {
 // SelectCompanionExe apre il file picker nativo e restituisce il path scelto.
 func (a *App) SelectCompanionExe() (string, error) {
 	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Seleziona companion exe",
+		Title: backend.T("dialog.selectCompanion"),
 		Filters: []runtime.FileFilter{
-			{DisplayName: "Eseguibili Windows (*.exe)", Pattern: "*.exe"},
-			{DisplayName: "Tutti i file (*)", Pattern: "*"},
+			{DisplayName: backend.T("dialog.windowsExe"), Pattern: "*.exe"},
+			{DisplayName: backend.T("dialog.allFiles"), Pattern: "*"},
 		},
 	})
 	return path, err

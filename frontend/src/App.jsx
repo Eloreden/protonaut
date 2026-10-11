@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     GetInstalledGames,
     GetRunningProtonProcesses,
@@ -18,6 +18,7 @@ import {
     OpenReleaseURL,
 } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
+import { I18nContext, LANGUAGES, makeT, resolveLanguage, useT } from './i18n';
 import './App.css';
 
 const POLL_INTERVAL = 2500;
@@ -40,10 +41,14 @@ export default function App() {
     const [error, setError] = useState(null);
     const [companionModal, setCompanionModal] = useState(null); // { game }
     const [currentMonitor, setCurrentMonitor] = useState(null);
-    const [settings, setSettings] = useState({ autoLaunchCompanions: true, autoDetectGames: true, startOnBoot: false });
+    const [settings, setSettings] = useState({ autoLaunchCompanions: true, autoDetectGames: true, startOnBoot: false, language: '' });
     const [showSettings, setShowSettings] = useState(false);
     const [update, setUpdate] = useState(null); // UpdateStatus dal backend
     const intervalRef = useRef(null);
+    const lang = resolveLanguage(settings.language);
+    const t = useMemo(() => makeT(lang), [lang]);
+
+    useEffect(() => { document.documentElement.lang = lang; }, [lang]);
 
     const refreshCompanions = useCallback(() => {
         GetCompanions().then(c => setCompanions(c || {})).catch(() => {});
@@ -128,11 +133,12 @@ export default function App() {
     const rest = filtered.filter(g => !g.favorite);
 
     return (
+        <I18nContext.Provider value={t}>
         <div className="app">
             <header className="header">
                 <span className="header-title">Protonaut</span>
                 <div className="header-stats">
-                    <span className="stat">{games.length} giochi</span>
+                    <span className="stat">{t('header.games', { count: games.length })}</span>
                     {currentMonitor && (
                         <span className="stat stat-monitor" title={`Monitor: ${currentMonitor.name}`}>
                             {currentMonitor.name}{currentMonitor.scale > 1 ? `: Zoom ${currentMonitor.scale}x` : ''}
@@ -141,24 +147,24 @@ export default function App() {
                     {runningCount > 0 && (
                         <span className="stat stat-running">
                             <span className="pulse-dot" />
-                            {runningCount} in esecuzione
+                            {t('header.running', { count: runningCount })}
                         </span>
                     )}
                     {update?.updateAvailable && !showSettings && (
                         <button
                             className="update-badge"
                             onClick={() => setShowSettings(true)}
-                            title={`Nuova versione ${update.latestVersion} disponibile`}
+                            title={t('header.updateTitle', { version: update.latestVersion })}
                         >
                             <span className="pulse-dot" />
-                            Aggiornamento {update.latestVersion}
+                            {t('header.update', { version: update.latestVersion })}
                         </button>
                     )}
                     <button
                         className={`settings-gear${showSettings ? ' settings-gear--active' : ''}${update?.updateAvailable ? ' settings-gear--dot' : ''}`}
                         onClick={() => setShowSettings(s => !s)}
-                        title="Impostazioni"
-                        aria-label="Impostazioni"
+                        title={t('header.settings')}
+                        aria-label={t('header.settings')}
                     >⚙</button>
                 </div>
             </header>
@@ -172,7 +178,7 @@ export default function App() {
                 <input
                     className="search-input"
                     type="text"
-                    placeholder="Cerca nome o AppID..."
+                    placeholder={t('library.search')}
                     value={filter}
                     onChange={e => setFilter(e.target.value)}
                     autoComplete="off"
@@ -180,15 +186,15 @@ export default function App() {
             </div>
 
             <div className="game-grid-wrapper">
-                {loading && <div className="state-msg">Caricamento librerie...</div>}
+                {loading && <div className="state-msg">{t('library.loading')}</div>}
                 {error && <div className="state-msg error">{error}</div>}
                 {!loading && !error && filtered.length === 0 && (
-                    <div className="state-msg">Nessun gioco trovato.</div>
+                    <div className="state-msg">{t('library.empty')}</div>
                 )}
 
                 {favs.length > 0 && (
                     <>
-                        <div className="section-label">★ Preferiti</div>
+                        <div className="section-label">{t('library.favorites')}</div>
                         <div className="game-grid">
                             {favs.map(g => (
                                 <GameCard key={g.appId} game={g}
@@ -206,7 +212,7 @@ export default function App() {
 
                 {rest.length > 0 && (
                     <>
-                        {favs.length > 0 && <div className="section-label">Tutti i giochi</div>}
+                        {favs.length > 0 && <div className="section-label">{t('library.all')}</div>}
                         <div className="game-grid">
                             {rest.map(g => (
                                 <GameCard key={g.appId} game={g}
@@ -235,10 +241,12 @@ export default function App() {
                 />
             )}
         </div>
+        </I18nContext.Provider>
     );
 }
 
 function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onRemove, onToggleFavorite, onLaunch }) {
+    const t = useT();
     const isRunning = runningIds.has(game.appId);
     const proc = runningProcs[game.appId];
     const [imgSrc, setImgSrc] = useState(null);
@@ -270,14 +278,14 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
         });
     };
 
-    const flashText = launchFlash === 'ok' ? '▶ Companion avviati'
-        : launchFlash === 'busy' ? '● Già in esecuzione' : '';
+    const flashText = launchFlash === 'ok' ? t('card.launched')
+        : launchFlash === 'busy' ? t('card.alreadyRunning') : '';
 
     return (
         <div
             className={`game-card${isRunning ? ' game-card--running' : ''}${hasCompanions ? ' game-card--launchable' : ''}`}
             onClick={handleLaunch}
-            title={hasCompanions ? 'Clic per lanciare i companion' : 'Nessun companion configurato — clic per aggiungerne'}
+            title={hasCompanions ? t('card.launchTitle') : t('card.noCompanionTitle')}
         >
             {launchFlash && <div className="card-launch-flash">{flashText}</div>}
             <div className="game-card__cover">
@@ -294,8 +302,8 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
                 <button
                     className={`card-fav-star${game.favorite ? ' card-fav-star--active' : ''}`}
                     onClick={(e) => { e.stopPropagation(); onToggleFavorite(game.appId, !game.favorite); }}
-                    title={game.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-                    aria-label={game.favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                    title={game.favorite ? t('card.removeFavorite') : t('card.addFavorite')}
+                    aria-label={game.favorite ? t('card.removeFavorite') : t('card.addFavorite')}
                 />
                 {isRunning && <span className="card-running-dot"><span className="pulse-dot" /></span>}
             </div>
@@ -305,7 +313,7 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
                 <div className="card-meta">
                     <span className="card-appid">{game.appId}</span>
                     {isRunning && proc && <span className="running-badge">PID {proc.pid}</span>}
-                    {isRunning && <span className="game-status">IN ESECUZIONE</span>}
+                    {isRunning && <span className="game-status">{t('card.running')}</span>}
                 </div>
             </div>
 
@@ -315,7 +323,7 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
                         {c.name}
                         <button
                             className="companion-chip-remove"
-                            title="Rimuovi"
+                            title={t('card.remove')}
                             onClick={(e) => { e.stopPropagation(); onRemove(c.exePath); }}
                         >×</button>
                     </span>
@@ -327,44 +335,58 @@ function GameCard({ game, runningIds, runningProcs, companions, onOpenModal, onR
 }
 
 function SettingsPage({ settings, onChange, update, onCheckUpdate }) {
+    const t = useT();
     const toggle = (key) => onChange({ ...settings, [key]: !settings[key] });
 
     return (
         <div className="settings-page">
-            <h2 className="settings-title">Impostazioni</h2>
+            <h2 className="settings-title">{t('settings.title')}</h2>
 
             <UpdateSection update={update} onCheckUpdate={onCheckUpdate} />
 
             <div className="settings-list">
+                <div className="setting-row setting-row--static">
+                    <div className="setting-text">
+                        <div className="setting-label">{t('settings.language')}</div>
+                        <div className="setting-hint">{t('settings.languageHint')}</div>
+                    </div>
+                    <select
+                        className="setting-select"
+                        value={settings.language || ''}
+                        onChange={e => onChange({ ...settings, language: e.target.value })}
+                        aria-label={t('settings.language')}
+                    >
+                        <option value="">{t('settings.languageAuto')}</option>
+                        {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </select>
+                </div>
                 <SettingRow
-                    label="Rilevamento automatico dei giochi"
-                    hint="Controlla in background i giochi Proton in esecuzione ed evidenzia il loro stato nella libreria."
+                    label={t('settings.autoDetect')}
+                    hint={t('settings.autoDetectHint')}
                     checked={settings.autoDetectGames}
                     onToggle={() => toggle('autoDetectGames')}
                 />
                 <SettingRow
-                    label="Avvio automatico dei companion"
-                    hint="Lancia automaticamente i companion abbinati appena il gioco corrispondente viene rilevato in esecuzione."
+                    label={t('settings.autoLaunch')}
+                    hint={t('settings.autoLaunchHint')}
                     checked={settings.autoLaunchCompanions}
                     onToggle={() => toggle('autoLaunchCompanions')}
                 />
                 <SettingRow
-                    label="Avvia all'avvio del PC"
-                    hint="Aggiunge Protonaut agli avvii automatici del sistema, così parte da solo al login."
+                    label={t('settings.startOnBoot')}
+                    hint={t('settings.startOnBootHint')}
                     checked={settings.startOnBoot}
                     onToggle={() => toggle('startOnBoot')}
                 />
             </div>
 
-            <p className="settings-note">
-                Avvio manuale: clicca sulla cella di un gioco nella libreria per lanciare
-                i suoi companion in qualsiasi momento, anche con l'avvio automatico disattivato.
-            </p>
+            <p className="settings-note">{t('settings.note')}</p>
         </div>
     );
 }
 
 function UpdateSection({ update, onCheckUpdate }) {
+    const t = useT();
     const [checking, setChecking] = useState(false);
     const [phase, setPhase] = useState('idle'); // idle | updating | done | error
     const [message, setMessage] = useState('');
@@ -376,9 +398,9 @@ function UpdateSection({ update, onCheckUpdate }) {
 
     const doUpdate = () => {
         setPhase('updating');
-        setMessage('Download e applicazione dell\'aggiornamento in corso...');
+        setMessage(t('update.applying'));
         ApplyUpdate()
-            .then(() => { setPhase('done'); setMessage('Aggiornamento applicato. Riavvia per usarlo.'); })
+            .then(() => { setPhase('done'); setMessage(t('update.applied')); })
             .catch((e) => { setPhase('error'); setMessage(String(e)); });
     };
 
@@ -391,14 +413,14 @@ function UpdateSection({ update, onCheckUpdate }) {
                 <div className="update-card-text">
                     <div className="update-card-title">
                         {available
-                            ? `Aggiornamento disponibile: ${update.latestVersion}`
-                            : 'Sei all\'ultima versione'}
+                            ? t('update.available', { version: update.latestVersion })
+                            : t('update.upToDate')}
                     </div>
                     <div className="update-card-sub">
-                        Versione attuale: <code>{cur}</code>
+                        {t('update.current')} <code>{cur}</code>
                         {available && update?.releaseUrl && (
                             <>  ·  <a className="update-link"
-                                onClick={() => OpenReleaseURL(update.releaseUrl)}>novità</a></>
+                                onClick={() => OpenReleaseURL(update.releaseUrl)}>{t('update.whatsNew')}</a></>
                         )}
                     </div>
                 </div>
@@ -406,26 +428,26 @@ function UpdateSection({ update, onCheckUpdate }) {
                 <div className="update-card-actions">
                     <button className="update-btn update-btn--ghost"
                         onClick={recheck} disabled={checking || phase === 'updating'}>
-                        {checking ? 'Controllo...' : 'Controlla'}
+                        {checking ? t('update.checking') : t('update.check')}
                     </button>
 
                     {available && phase !== 'done' && (
                         update?.canSelfUpdate ? (
                             <button className="update-btn update-btn--primary"
                                 onClick={doUpdate} disabled={phase === 'updating'}>
-                                {phase === 'updating' ? 'Aggiornamento...' : 'Aggiorna ora'}
+                                {phase === 'updating' ? t('update.updating') : t('update.updateNow')}
                             </button>
                         ) : (
                             <button className="update-btn update-btn--primary"
                                 onClick={() => update?.releaseUrl && OpenReleaseURL(update.releaseUrl)}>
-                                Scarica
+                                {t('update.download')}
                             </button>
                         )
                     )}
 
                     {phase === 'done' && (
                         <button className="update-btn update-btn--primary" onClick={() => RestartApp()}>
-                            Riavvia ora
+                            {t('update.restartNow')}
                         </button>
                     )}
                 </div>
@@ -435,12 +457,13 @@ function UpdateSection({ update, onCheckUpdate }) {
 
             {available && !update?.canSelfUpdate && update?.isAppImage && (
                 <div className="update-note">
-                    Installa <code>AppImageUpdate</code> (o AppImageLauncher) per aggiornare dall'app.
+                    {t('update.appImageNote').split('{tool}').flatMap((part, i) =>
+                        i === 0 ? [part] : [<code key={i}>AppImageUpdate</code>, part])}
                 </div>
             )}
             {available && !update?.isAppImage && (
                 <div className="update-note">
-                    Installazione da pacchetto: aggiorna tramite il gestore pacchetti del sistema (es. Octopi / paru).
+                    {t('update.packageNote')}
                 </div>
             )}
         </div>
@@ -468,6 +491,7 @@ function SettingRow({ label, hint, checked, onToggle }) {
 }
 
 function CompanionModal({ game, companions, onClose, onAdded, onRemoved }) {
+    const t = useT();
     const [browsing, setBrowsing] = useState(false);
 
     const browse = () => {
@@ -489,7 +513,7 @@ function CompanionModal({ game, companions, onClose, onAdded, onRemoved }) {
         <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
             <div className="modal">
                 <div className="modal-header">
-                    <span className="modal-title">Companion — {game.name}</span>
+                    <span className="modal-title">{t('modal.title', { name: game.name })}</span>
                     <button className="modal-close" onClick={onClose}>✕</button>
                 </div>
 
@@ -510,22 +534,22 @@ function CompanionModal({ game, companions, onClose, onAdded, onRemoved }) {
                                     <button
                                         className="modal-remove-btn"
                                         onClick={() => remove(c.exePath)}
-                                    >Rimuovi</button>
+                                    >{t('modal.remove')}</button>
                                 </div>
                             ))}
                         </div>
                     )}
 
                     <p className="modal-hint">
-                        Verranno lanciati automaticamente all'avvio del gioco:<br />
+                        {t('modal.hint')}<br />
                         <code>protontricks-launch --no-bwrap --appid {game.appId} &lt;exe&gt;</code>
                     </p>
                 </div>
 
                 <div className="modal-footer">
-                    <button className="modal-btn modal-btn--cancel" onClick={onClose}>Chiudi</button>
+                    <button className="modal-btn modal-btn--cancel" onClick={onClose}>{t('modal.close')}</button>
                     <button className="modal-btn modal-btn--browse" onClick={browse} disabled={browsing}>
-                        {browsing ? 'Seleziona...' : '+ Aggiungi exe'}
+                        {browsing ? t('modal.selecting') : t('modal.addExe')}
                     </button>
                 </div>
             </div>
