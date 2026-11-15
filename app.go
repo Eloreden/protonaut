@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"time"
 
@@ -248,6 +249,7 @@ func (a *App) RestartApp() error {
 		return nil
 	}
 	cmd := exec.Command(appimage)
+	cmd.Dir = filepath.Dir(appimage) // non ereditare la cwd dentro il mount dell'AppImage
 	cmd.Stdout, cmd.Stderr = nil, nil
 	if err := cmd.Start(); err != nil {
 		return err
