@@ -244,6 +244,9 @@ func (cm *CompanionManager) LaunchCompanionsFor(appId string) int {
 // launch esegue protontricks-launch in background e aspetta la fine.
 func (cm *CompanionManager) launch(appId, exePath string) {
 	cmd := exec.Command("protontricks-launch", "--no-bwrap", "--appid", appId, exePath)
+	// Esplicito: dentro l'AppImage la cwd dell'app è $APPDIR/usr (serve a WebKit),
+	// che il companion non deve ereditare. Molti tool si aspettano la propria cartella.
+	cmd.Dir = filepath.Dir(exePath)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	_ = cmd.Run()
