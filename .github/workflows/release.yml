@@ -95,17 +95,18 @@ jobs:
             "packaging/appimage/build/Protonaut-${VERSION}-x86_64.AppImage.zsync"
 
   publish-aur:
-    needs: build
+    needs: appimage   # il tag vX.Y.Z deve già esistere: pkgver() lo legge con git describe
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # storia completa: pkgver() usa git rev-list --count
+          fetch-depth: 0   # storia completa + tag: pkgver() usa git describe
 
-      - name: Compute pkgver from git HEAD
+      - name: Compute pkgver from git tags
         run: |
-          PKGVER="r$(git rev-list --count HEAD).$(git rev-parse --short HEAD)"
+          git fetch --tags --force   # include il tag appena creato dal job appimage
+          PKGVER=$(git describe --long --tags --abbrev=7 | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g')
           echo "Computed pkgver: $PKGVER"
           sed -i "s/^pkgver=.*/pkgver=$PKGVER/" packaging/aur/PKGBUILD
 

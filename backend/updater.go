@@ -74,7 +74,9 @@ func CheckForUpdate(current string) (models.UpdateStatus, error) {
 	status.LatestVersion = rel.TagName
 	status.ReleaseURL = rel.HTMLURL
 	status.ReleaseNotes = rel.Body
-	status.UpdateAvailable = compareVersions(rel.TagName, current) > 0
+	// Se la versione corrente non è semver ("dev" in sviluppo, o un build senza
+	// tag) non si può confrontare: meglio non segnalare un aggiornamento fasullo.
+	status.UpdateAvailable = isSemver(current) && compareVersions(rel.TagName, current) > 0
 	return status, nil
 }
 
@@ -115,18 +117,34 @@ func compareVersions(a, b string) int {
 	return 0
 }
 
+// isSemver dice se v ha la forma "vX.Y.Z" / "X.Y.Z" (eventuale suffisso
+// -pre/+build ammesso), cioè se ha senso confrontarla con il tag di una release.
+func isSemver(v string) bool {
+	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+	if i := strings.IndexAny(v, "-+"); i >= 0 {
+		v = v[:i]
+	}
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	for _, p := range parts {
+		if _, err := strconv.Atoi(p); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
 func parseVersion(v string) [3]int {
 	v = strings.TrimSpace(v)
 	v = strings.TrimPrefix(v, "v")
-	// scarta eventuale suffisso di pre-release/build (es. 1.2.3-rc1)
+	// scarta eventuale suffisso di pre-release/build (es. 1.2.3-rc1, 1.2.3-2-gabc1234)
 	if i := strings.IndexAny(v, "-+"); i >= 0 {
 		v = v[:i]
 	}
 	var out [3]int
 	for i, part := range strings.SplitN(v, ".", 3) {
-		if i > 2 {
-			break
-		}
 		n, _ := strconv.Atoi(strings.TrimSpace(part))
 		out[i] = n
 	}
