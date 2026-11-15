@@ -31,12 +31,6 @@ jobs:
       - name: Build
         run: wails build -tags webkit2_41 -trimpath -ldflags "-w -s"
 
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: protonaut-linux-amd64
-          path: build/bin/Protonaut
-
   appimage:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
